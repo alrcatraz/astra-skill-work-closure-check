@@ -1,4 +1,9 @@
 # astra-skill-work-closure-check
+<div align="center">
+
+[![License](https://badgen.net/github/license/alrcatraz/astra-skill-work-closure-check)](LICENSE) [![GitHub stars](https://badgen.net/github/stars/alrcatraz/astra-skill-work-closure-check)](https://github.com/alrcatraz/astra-skill-work-closure-check) [![GitHub last commit](https://badgen.net/github/last-commit/alrcatraz/astra-skill-work-closure-check)](https://github.com/alrcatraz/astra-skill-work-closure-check/commits)
+
+</div>
 
 Mandatory closure checklist when wrapping up a task for Hermes Agent. Provides a six-stage systematic check: credential leak scan, skill update evaluation, decision record documentation, service/device registration, information storage verification, and environment baseline comparison.
 
@@ -23,9 +28,21 @@ cp SKILL.md ~/.hermes/profiles/default/skills/work-closure-check.md
 | [astra-sre](https://github.com/alrcatraz/astra-sre) | Two-Strike Rule (skill creation decision tree) | Optional | Skill creation vs patching decisions during closure |
 | [astra-aiagent-infra](https://github.com/alrcatraz/astra-aiagent-infra) | `docs/credential-schema.md` | Optional | Credential leak scan references credential storage conventions |
 
+## Related
+
+- [astra-aiagent-infra](https://github.com/alrcatraz/astra-aiagent-infra) — ecosystem portal
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+<div align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=alrcatraz/astra-skill-work-closure-check&type=date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=alrcatraz/astra-skill-work-closure-check&type=date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=alrcatraz/astra-skill-work-closure-check&type=date" width="600" />
+  </picture>
+</div>
 
 ---
 
