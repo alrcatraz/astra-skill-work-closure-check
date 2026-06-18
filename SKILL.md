@@ -1,132 +1,153 @@
 ---
 name: work-closure-check
-description: "任务收尾时强制执行的闭环检查清单：确认成功、清理临时文件、询问 skill/文档化/记忆准确性。"
+description: "Mandatory closure checklist when wrapping up a task: confirm success, clean temporary files, evaluate skill/documentation updates, verify information storage."
+category: devops
 version: 1.1.0
-author: ANGELIA
-platforms: [linux]
 ---
 
-# 收尾闭环检查 (Work Closure Check)
+# Work Closure Check
 
-> SOUL.md §4.3 的执行保障。任务从执行阶段转入收尾阶段时，**必须先**加载此 skill 执行系统化检查，然后再通知用户确认成功。
+> Enforcement of the closure discipline. When a task transitions from execution to wrap-up, **this skill must be loaded first** to run the systematic checks before notifying the user to confirm success.
 
-## 触发关键词
+## Trigger Keywords
 
-此 skill 在以下关键词出现时被 skill 扫描自动触发加载：
+This skill is auto-loaded when the following keywords appear:
 
-- 收尾、完成、总结、清理、结束
-- 验证完、测试完、交付
-- "帮我看看是不是好了"、"确认成功"
+- wrap up, finish, summarise, clean up, end
+- verified, tested, delivered
+- "can you check if it's done", "confirm success"
 
-## 检查清单（按顺序执行）
+## Checklist (execute in order)
 
-### ① 凭证泄露扫描
+### ① Credential Leak Scan
 
-**——本次任务有没有涉及任何凭证（密码、token、API key、SSH 私钥）？**
+**——Did this task involve any credentials (passwords, tokens, API keys, SSH private keys)?**
 
-有 → 检查以下各处是否残留了明文值：
+If yes → check the following locations for plaintext residuals:
 
-| 检查位置 | 通过标准 | 违规处理 |
-|:---------|:---------|:---------|
-| **Memory** (memory tool) | 无任何密码/token/私钥内容 | 立即删除，替换为 `→GPG creds` 引用 |
-| **Terminal output** (session 历史) | 无密码暴露在命令参数中 | 如果已经发生过，通知用户风险 |
-| **Skill 内容** | 无硬编码凭据 | 移到加密存储（本地参考索引 → 凭证存放规范） |
-| **文件残留**（临时脚本、config backup） | 无含密码的临时文件 | 删除或清理敏感字段 |
+| Location | Pass criterion | Violation action |
+|:---------|:---------------|:-----------------|
+| **Memory** (memory tool) | No passwords/tokens/private keys | Delete immediately, replace with `→secure store` reference |
+| **Terminal output** (session history) | No credentials exposed in command arguments | If already exposed, inform the user of the risk |
+| **Skill content** | No hardcoded credentials | Move to encrypted storage |
+| **File residuals** (temp scripts, config backups) | No credential-containing temp files | Delete or sanitise sensitive fields |
 
-**核心原则：** 记忆里不允许存实际凭证值。所有密码/token 仅存放在对应的加密存储中，记忆里只留引用。
+**Core principle:** Credentials must never be stored in memory. All passwords/tokens live only in their designated encrypted storage; memory holds only references.
 
-> 参考: 本地参考索引 → 凭证存放规范
+If none or cleaned → proceed.
 
-无或已清理 → 继续
+### ② Skill Update Check
 
-### ② 技能更新检查
+**——Does this session contain any notable problems, workflows, or techniques worth recording?**
 
-**——本次有没有值得记录的特定问题、workflow 或 technique？**
+Ask each:
 
-逐一问：
+| Question | If yes |
+|:---------|:-------|
+| Did you solve a specific problem worth recording? | **Save as a new skill** |
+| Did you find an existing skill that is outdated, incomplete, or has pitfalls? | **Patch it immediately** |
+| Did you identify a class-level pattern worth abstracting? | Create a class-level umbrella skill |
+| Are there session-specific details worth archiving? | Add a reference file under the existing skill's `references/` |
 
-| 问题 | 如果"是" |
-|:----|:---------|
-| 是否解决了值得记录的特定问题？ | **存为新 skill** |
-| 是否发现已有 skill 过时、有坑、缺步骤？ | **立即 patch** 该 skill |
-| 是否发现一个 class-level 的模式值得抽象？ | 创建 class-level 的 umbrella skill |
-| 是否有 session-specific 的细节值得存档？ | 在现有 skill 的 `references/` 下加参考文件 |
+**Naming principle:** New skills must use class-level names, not session-specific artefacts (`fix-something-today` ✗ → `something-diagnostics` ✓).
 
-**命名原则：** 新 skill 必须是 class-level 名称，不能是具体 session 产物（`fix-something-today` ❌ → `something-diagnostics` ✅）。
+### ③ Decision Record Check
 
-> 参考: SOUL.md §4.3, `astra-sre` → Two-Strike Rule
+**——Were any trade-off decisions made during this session that are worth documenting?**
 
-### ③ 决策记录检查
-
-——**本次有没有做了值得文档化的决策（"为什么选 A 不选 B"）？**
-
-有 → 在相关的 skill 参考文档或 `sre_incidents` 知识库中记录：
+If yes → record in the relevant skill reference documentation, or check whether `astra-lifecycle-sync --check` reports matching hooks (requires the lifecycle tool to be deployed):
 
 ```markdown
-## 决策记录 (YYYY-MM-DD)
-- **场景:** [问题描述]
-- **选项:** [A: 方案/ B: 方案/ C: 方案]
-- **选中的理由:** [关键 trade-off]
-- **未选的代价:** [被放弃选项的损失]
+## Decision Record (YYYY-MM-DD)
+- **Context:** [problem description]
+- **Options:** [A: approach / B: approach / C: approach]
+- **Chosen:** [key trade-off]
+- **Cost of rejected options:** [what was sacrificed]
 ```
 
-> 例如: "用 IPMI SEL 而不是 Redfish EventLog — 因为 EventLog 可能空，SEL 才是硬件黑匣子"
+> Example: "Use IPMI SEL instead of Redfish EventLog — EventLog may be empty, SEL is the hardware black box."
 
-### ④ 服务/设备登记检查
+### ④ Service/Device Registration Check
 
-**——本次有没有部署新服务、新 MCP、新 CLI 工具、或连接新设备？**
+**——Was any new service, MCP, CLI tool, or device connected during this session?**
 
-有 → 对应登记：
+If yes → register accordingly:
 
-| 对象 | 登记位置 |
-|:----|:---------|
-| 新服务 (MCP/CLI/HTTP) | 服务清单（本地参考索引 → 服务管理入口） |
-| 新设备 (SSH可达) | 设备清单（本地参考索引 → 项目地图） |
-| 新凭证分类 | 凭证存放规范（本地参考索引 → 凭证存放规范） |
+| Object | Registration target |
+|:-------|:--------------------|
+| New service (MCP / CLI / HTTP) | Service inventory |
+| New device (SSH-reachable) | Device inventory |
+| New credential category | Credential storage convention |
 
-无 → 继续
+If none → proceed.
 
-### ⑤ 记忆准确性检查
+### ⑤ Information Storage Check
 
-——**记忆中的信息是否仍反映最新状态？**
+This stage is executed dynamically by the agent based on available tools.
 
-- 旧的路径、IP、主机名是否已过期？
-- 用户偏好是否有新变化？（来自用户当场说的）
-- 本次发现是否值得记入 memory？（不是 task progress，是稳定事实）
+**Decision tree: whether to store information and where**
 
-> **不要记：** task progress、session 产物、PR 号、commit SHA、临时 TODO
+```
+Information produced
+  │
+  ├─ Type: preference / workflow / reference / environment fact / ephemeral state
+  │
+  ├─ Tool survey: what storage tools does this Hermes instance have?
+  │   (agent enumerates available tools — no specific tool is presumed to exist)
+  │
+  └─ Placement decision:
+      ├─ Reusable workflow / solution / lesson
+      │   → skill (skill_manage), never into persistent memory
+      ├─ Long-lived reference / decision record
+      │   → knowledge-base-type tools preferred, local files as fallback
+      ├─ Preference / corrected assumption / environment fact
+      │   → external persistent memory preferred (avoids context bloat)
+      │     fall back to memory when no external persistent storage is available
+      └─ Ephemeral state / PR number / commit SHA / one-off output
+          → store nowhere, retrieve via session_search
+```
 
-### ⑥ 环境基线对比（如果涉及修改）
+**Agent self-check list:**
 
-——**如果操作前记录了环境基线，操作后逐项对比了吗？**
+- [ ] Enumerate all storage tools available to this session
+  (agent lists them — no specific tool is presumed to exist)
+- [ ] For each available tool, check for **information that should have been recorded** or **information that was recorded incorrectly**
+- [ ] Confirm that workflow/solution information belongs in skills, not in any persistent memory
+- [ ] Confirm no credential residuals (credentials belong in encrypted storage, not in any tool listed above)
+- [ ] Confirm that **no TODO / task progress / commit SHA / ephemeral session state** was written to memory
+  (These belong to `session_search` recovery, not persistent storage)
+- [ ] Confirm that all persistent memory entries use **declarative sentences** (`user prefers concise responses` ✓),
+  never **imperative sentences** (`must respond concisely` ✗)
 
-| 对比项 | 差异即问题？ |
-|:-------|:------------|
-| systemd 服务列表 | ✅ 新增服务应已登记，遗留的应说明 |
-| 监听端口 | ✅ 被关闭的端口应可追溯 |
-| Docker 容器 | ✅ 新增/移除应与本次任务一致 |
-| 挂载点 | ✅ 不应有意外挂载或残留 |
-| crontab | ✅ 新增 cron 应已登记 |
-| 网络配置 | ✅ 接口变化应有原因 |
+### ⑥ Environment Baseline Comparison (if modification was involved)
 
-> 参考: SOUL.md §2.1 先保全再改 — 基线记录
+**——If a baseline was recorded before the change, has every item been compared after the change?**
 
-## 标准收尾流程
+| Item | Difference is a problem? |
+|:-----|:-------------------------|
+| systemd service list | ✅ New services should be registered; leftovers should be explained |
+| Listening ports | ✅ Closed ports should be traceable |
+| Docker containers | ✅ Adds/removes should match this task |
+| Mount points | ✅ No unexpected mounts or residuals |
+| crontab | ✅ New cron entries should be registered |
+| Network configuration | ✅ Interface changes should have a reason |
 
-检查清单执行完毕后，按此顺序走收尾：
+## Standard Closure Procedure
 
-1. ✅ **通知用户** — "任务做完了，请确认是否成功"
-2. ⏳ **等待确认** — **不允许**跳过确认直接清理或结束
-3. 🧹 **用户确认后** — 清理临时文件/脚本
-4. 📝 **完整汇总** — 做了什么、结果如何、遗留问题
-5. 📚 **收尾再问** — "还有什么需要帮忙的吗？"
+After the checklist is complete, follow this order:
 
-> **特别注意：** 即使检查清单都过了，最后一步通知用户仍然必须。用户可能发现你检查中遗漏的问题。
+1. ✅ **Notify the user** — "Task complete, please confirm success"
+2. ⏳ **Wait for confirmation** — Do **not** skip confirmation and clean up directly
+3. 🧹 **After user confirms** — Clean up temporary files/scripts
+4. 📝 **Full summary** — What was done, results, outstanding issues
+5. 📚 **Final offer** — "Is there anything else I can help with?"
 
-## 坑
+> **Important:** Even if all checklist items pass, the final notification to the user is still required. The user may spot issues you missed.
 
-1. **不要跳过"等待确认"直接清理。** 用户可能想看一眼测试结果或临时文件内容。
-2. **不要混淆「技能更新」和「存记忆」。** 技能是「怎么做」，记忆是「用户是谁/环境长什么样」。同一个 technique 不应该同时记在两个地方。
-3. **「本次没涉及凭证」不等于「记忆里没有残留」。** 记忆可能从前几个 session 的凭证还留着——检查清单的①必须做，不能因为本次没涉及就跳过。
-4. **「多问一句」不是选项，是必选。** 即使觉得"这次没什么特别的"，也要执行检查清单——你可能忽略了值记录的东西。
-5. **收尾阶段的 skill 不要产生新的收尾。** 加载此 skill 执行检查 → 完成 ✅，不要检查完又触发自己再问一轮。
+## Pitfalls
+
+1. **Do not skip "waiting for confirmation" and clean up directly.** The user may want to see test results or temporary file contents.
+2. **Do not confuse "skill update" with "store in memory".** Skills capture *how to do something*; memory captures *who the user is / what the environment looks like*. The same technique should not live in both places.
+3. **"No credentials involved this time" does not mean "memory is clean".** Memory may still contain credentials from previous sessions — stage ① must be executed regardless.
+4. **"Ask one more question" is not optional, it's mandatory.** Even if you think "there's nothing special this time", execute the checklist — you may have missed something worth recording.
+5. **Closure-stage skills must not trigger a new closure.** Load this skill → run checks → complete ✓. Do not trigger another round of self-checks after finishing.

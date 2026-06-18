@@ -1,14 +1,43 @@
 # astra-skill-work-closure-check
 
-任务收尾时强制执行的闭环检查清单 Hermes Agent skill。提供六阶段系统化检查：凭证扫描、技能更新、决策记录、服务登记、记忆准确性、环境基线对比。
+Mandatory closure checklist when wrapping up a task for Hermes Agent. Provides a six-stage systematic check: credential leak scan, skill update evaluation, decision record documentation, service/device registration, information storage verification, and environment baseline comparison.
 
-## 功能
+## Features
 
-- 六阶段闭环检查：凭证泄露 → 技能更新 → 决策记录 → 服务/设备登记 → 记忆准确性 → 环境基线对比
+- Six-stage closure check: credential leak → skill update → decision record → service/device registration → information storage → environment baseline
+- Standardised closure procedure: notify → wait for confirmation → clean → summarise → final offer
+- Pitfall reminders: don't skip confirmation, don't confuse skill/memory boundaries, cross-session credential residuals
+
+## Install
+
+Copy `SKILL.md` to your Hermes profile's `skills/` directory:
+
+```bash
+cp SKILL.md ~/.hermes/profiles/default/skills/work-closure-check.md
+```
+
+## Dependencies
+
+| Repository | Resource | Required | Purpose |
+|:-----------|:---------|:--------:|:--------|
+| [astra-sre](https://github.com/alrcatraz/astra-sre) | Two-Strike Rule (skill creation decision tree) | Optional | Skill creation vs patching decisions during closure |
+| [astra-aiagent-infra](https://github.com/alrcatraz/astra-aiagent-infra) | `docs/credential-schema.md` | Optional | Credential leak scan references credential storage conventions |
+
+## License
+
+MIT — see [LICENSE](LICENSE).
+
+---
+
+## 中文版
+
+### 功能
+
+- 六阶段闭环检查：凭证泄露 → 技能更新 → 决策记录 → 服务/设备登记 → 信息存储 → 环境基线对比
 - 标准化收尾流程：通知 → 等待确认 → 清理 → 汇总 → 再问
 - 防坑提醒：不跳过确认、不混淆 skill/记忆、凭证跨 session 残留检查
 
-## 安装
+### 安装
 
 将 `SKILL.md` 复制到 Hermes profile 的 `skills/` 目录下：
 
@@ -16,6 +45,9 @@
 cp SKILL.md ~/.hermes/profiles/default/skills/work-closure-check.md
 ```
 
-## License
+### 依赖关系
 
-MIT — 详见 [LICENSE](LICENSE)
+| 仓库 | 资源 | 必须 | 用途 |
+|:-----|:-----|:----:|:-----|
+| [astra-sre](https://github.com/alrcatraz/astra-sre) | Two-Strike Rule（skill 创建决策树） | 可选 | 收尾时关于创建还是修补 skill 的决策 |
+| [astra-aiagent-infra](https://github.com/alrcatraz/astra-aiagent-infra) | `docs/credential-schema.md` | 可选 | 凭证泄露扫描引用的凭证存储规范 |
