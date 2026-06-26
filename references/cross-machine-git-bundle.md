@@ -1,12 +1,14 @@
 # Cross-Machine Git Bundle Transfer
 
-> When the agent commits code on a machine without GitHub credentials (e.g. the user's X1 Tablet), transfer the commits to HomeCentre01 (the credential-holding machine) via `git bundle` and push from there.
+> When the agent commits code on a machine without GitHub credentials, transfer the commits to the credential-holding machine via `git bundle` and push from there.
+>
+> 你的本地配置（HomeCentre01 地址、SSH 别名、密码）→ `work-closure-check/references/git-bundle-local-config.md`。
 
 ## When to Use
 
 - You made git commits on a machine that doesn't have GitHub SSH keys, GCM credentials, or GPG-decryptable pass store entries
-- The user expects you to push from "yourself" (HomeCentre01), not from their personal device
-- You have SSH access to HomeCentre01 and know the password (see memory for `alrcatraz` sudo pw)
+- The user expects you to push from the credential-holding machine, not from their personal device
+- You have SSH access to the credential-holding machine and know the password
 
 ## Full Workflow
 
@@ -21,7 +23,7 @@ git bundle create /tmp/git-bundles/<repo>.bundle HEAD --all
 ### Step 2: Transfer to HomeCentre01
 
 ```bash
-sshpass -p '<password>' scp /tmp/git-bundles/*.bundle alrcatraz@10.20.5.10:/tmp/
+sshpass -p '<jump-password>' scp /tmp/git-bundles/*.bundle <jump-user>@<jump-ip>:/tmp/
 ```
 
 > `sshpass` must be installed on the source machine. If not, install with `zypper install sshpass` (openSUSE) or equivalent.
@@ -31,7 +33,7 @@ sshpass -p '<password>' scp /tmp/git-bundles/*.bundle alrcatraz@10.20.5.10:/tmp/
 When a branch is currently checked out, `git fetch` refuses to fetch into it directly. Use a temp-branch workaround:
 
 ```bash
-sshpass -p '<password>' ssh alrcatraz@10.20.5.10 "
+sshpass -p '<jump-password>' ssh <jump-user>@<jump-ip> "
 cd ~/Projects/astra/<repo>
 
 # Fetch bundle into a temporary ref
@@ -54,10 +56,10 @@ git branch -D _bundle_tmp bundle_<branch>
 Decrypt the GitHub PAT from the local pass store and push via HTTPS:
 
 ```bash
-TOKEN=$(gpg --decrypt --pinentry-mode=loopback --passphrase 'yukikase503' \
-  --quiet ~/.password-store/git/https/github.com/alrcatraz.gpg 2>/dev/null | head -1)
+TOKEN=$(gpg --decrypt --pinentry-mode=loopback --passphrase '<gpg-passphrase>' \
+  --quiet ~/.password-store/git/https/github.com/<github-user>.gpg 2>/dev/null | head -1)
 
-GIT_TERMINAL_PROMPT=0 git -c credential.helper="!f() { echo username=alrcatraz; echo password=$TOKEN; }; f" push origin <branch>
+GIT_TERMINAL_PROMPT=0 git -c credential.helper="!f() { echo username=<github-user>; echo password=$TOKEN; }; f" push origin <branch>
 ```
 
 > The `--pinentry-mode loopback` flag allows GPG decryption without a TTY/pinentry dialog — critical for non-interactive SSH sessions.
@@ -74,7 +76,7 @@ GIT_TERMINAL_PROMPT=0 git -c credential.helper="!f() { echo username=alrcatraz; 
 
 5. **`GIT_TERMINAL_PROMPT=0` prevents interactive auth fallback.** If the credential helper fails, git won't prompt for a password. This ensures clean failure instead of a hung SSH session.
 
-6. **HomeCentre01 password may differ from the GPG passphrase.** From memory: `alrcatraz` sudo/SSH pw is `401503` on HomeCentre01. The GPG passphrase for credential decryption is `yukikase503`. These are different secrets.
+6. **HomeCentre01 password may differ from the GPG passphrase.** These are stored as separate secrets — see the local config file for specific values.
 
 ## Verification
 
